@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'gatsby';
 
+import WeekPlanner from '../WeekPlanner';
 import { logOut } from '../../../util/Auth0';
 
 const App = ({ user }) => {
@@ -12,6 +13,7 @@ const App = ({ user }) => {
             <h2>Hi {user.name.split(' ')[0]}!</h2>
             <button onClick={() => logOut()}>Log Out</button>
             <Link to="/">Home</Link>
+            <WeekPlanner />
         </>
     );
 };

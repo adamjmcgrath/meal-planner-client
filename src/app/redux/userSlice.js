@@ -1,11 +1,13 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { from } from 'rxjs';
-import { exhaustMap, map } from 'rxjs/operators';
+import { createSlice, createSelector } from '@reduxjs/toolkit';
+import { from, of } from 'rxjs';
+import { exhaustMap, mergeMap, map } from 'rxjs/operators';
 import { combineEpics, ofType } from 'redux-observable';
 import _keyBy from 'lodash/keyBy';
+import _get from 'lodash/get';
 
 import { fetchSession } from '../../util/Auth0';
 import { NOT_FETCHED } from '../../util/constants';
+import UrqlClient from '../util/urqlClient';
 
 const { reducer, actions } = createSlice({
     name: 'user',
@@ -39,32 +41,48 @@ export const userReducer = reducer;
 
 export const { fetchUser, fetchUserFulfilled } = actions;
 
-const fetchTeamsForUser = () =>
-    Promise.resolve([
-        {
-            id: 1,
-            name: 'Noad-Affoo'
-        }
-    ]);
-
-const fetchPayload = async () => {
-    const session = await fetchSession();
-
-    if (session === null) {
-        return null;
+const teamQuery = `
+  query fetchTeams {
+    teams {
+      id
+      name
     }
-
-    const { accessToken } = session;
-
-    const teams = await fetchTeamsForUser(accessToken);
-
-    return { session, teams };
-};
+  }
+`;
 
 const fetchUserEpic = (action$) =>
     action$.pipe(
         ofType(fetchUser.type),
-        exhaustMap(() => from(fetchPayload()).pipe(map((payload) => fetchUserFulfilled(payload))))
+        exhaustMap(() =>
+            from(fetchSession()).pipe(
+                mergeMap((session) => {
+                    if (session === null) {
+                        return of(null);
+                    }
+
+                    return from(
+                        UrqlClient.query(teamQuery, undefined, {
+                            fetchOptions: {
+                                headers: { authorization: `Bearer ${session.accessToken}` }
+                            }
+                        }).toPromise()
+                    ).pipe(map((response) => ({ session, teams: response.data.teams })));
+                }),
+                map((payload) => fetchUserFulfilled(payload))
+            )
+        )
     );
 
 export const userEpic = combineEpics(fetchUserEpic);
+
+export const selectUser = (state) => state.user;
+
+export const selectAuthToken = createSelector(selectUser, (user) =>
+    _get(user, ['session', 'accessToken'], '')
+);
+
+export const selectTeam = createSelector(selectUser, (user) => {
+    const id = _get(user, ['teams', 'activeTeamId']);
+
+    return id !== undefined ? user.teams.indexedById[id] : null;
+});

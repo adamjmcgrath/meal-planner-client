@@ -1,5 +1,5 @@
 import React from 'react';
-import { navigate } from 'gatsby';
+import { Redirect } from '@reach/router';
 
 import { useUser } from '../../../util/customHooks';
 import { NOT_FETCHED } from '../../../util/constants';
@@ -14,8 +14,7 @@ const PrivateRoute = ({ component: Component, ...rest }) => {
 
     // If the user is NOT logged in, then redirect to the index page.
     if (user === null) {
-        navigate('/');
-        return null;
+        return <Redirect to="/" noThrow />;
     }
 
     return <Component user={user} {...rest} />;

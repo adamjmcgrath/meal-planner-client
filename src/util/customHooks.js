@@ -1,10 +1,10 @@
-import { useSelector, useDispatch, shallowEqual } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { NOT_FETCHED } from './constants';
-import { fetchUser } from '../app/redux/userSlice';
+import { fetchUser, selectUser } from '../app/redux/userSlice';
 
 export const useUser = () => {
-    const user = useSelector((state) => state.user, shallowEqual);
+    const user = useSelector(selectUser);
 
     const dispatch = useDispatch();
 
