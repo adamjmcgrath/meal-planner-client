@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { NOT_FETCHED } from './constants';
@@ -8,9 +9,11 @@ export const useUser = () => {
 
     const dispatch = useDispatch();
 
-    if (user === NOT_FETCHED) {
-        dispatch(fetchUser());
-    }
+    useEffect(() => {
+        if (user === NOT_FETCHED) {
+            dispatch(fetchUser());
+        }
+    }, [user]);
 
     return user;
 };
