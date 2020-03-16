@@ -1,4 +1,4 @@
-import { WebAuth } from 'auth0-js';
+import { WebAuth } from '../auth0';
 import _has from 'lodash/has';
 
 let webAuth = null;
